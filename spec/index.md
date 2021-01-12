@@ -1,5 +1,7 @@
 # I2C Protocol specification for nRF and KL27 communication (draft)
 
+This is version 0.9.0 of the specification.
+
 - [Glosary](#glosary)
 - [I2C Slave addresses](#i2c-slave-addresses)
 - [I2C nRF - KL27 config/comms interface](#i2c-nrf--kl27-configcomms-interface)
