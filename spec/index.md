@@ -1,22 +1,52 @@
-# I2C Protocol specification for nRF and KL27 communication (draft)
+# micro:bit I2C Protocol Specification
 
-This is version 0.9.0 of the specification.
+This is version 0.9.1 of the specification.
 
-- [Glosary](#glosary)
-- [I2C Slave addresses](#i2c-slave-addresses)
+- [Glossary](#glosary)
+- [Introduction](#introduction)
+- [I2C Secondary addresses](#i2c-secondary-addresses)
 - [I2C nRF - KL27 config/comms interface](#i2c-nrf--kl27-configcomms-interface)
 - [I2C Flash interface](#i2c-flash-interface)
 - [HID Interface](#hid-interface)
 
 
-## Glosary
+## Glossary
 
-- Storage: Flash available in the KL27 for micro:bit data and config storage
+| Term          | Definition |
+| ------------- | ---------- |
+| DAPLink       | [Interface firmware](https://github.com/ARMmbed/DAPLink) providing USB and programming capabilities |
+| I2C           | [Inter-Integrated Circuit](https://en.wikipedia.org/wiki/I%C2%B2C) bus |
+| I2C main      | I2C node in control of the clock and initiating transactions |
+| I2C secondary | I2C peripheral that responds to the I2C main |
+| Storage       | Flash available in the KL27 for micro:bit data and config storage |
+| SWD           | [Serial Wire Debug](https://developer.arm.com/architectures/cpu-architecture/debug-visibility-and-trace/coresight-architecture/serial-wire-debug) |
+| UART          | [Universal asynchronous receiver-transmitter](https://en.wikipedia.org/wiki/Universal_asynchronous_receiver-transmitter) |
 
 
-## I2C Slave addresses
+## Introduction
 
-| I2C Slave                                    | 7-bit address |
+The micro:bit contains two microcontrollers, the Interface MCU which provides the USB functionality, and the Target MCU where the user code runs.
+More information can be found in the [Tech Site DAPLink page](https://tech.microbit.org/software/daplink-interface/).
+
+In micro:bit V1 there are UART and SWD signals connecting the Interface MCU (KL26) and the Target MCU (nRF51). These are used to program the Target MCU (nRF51) and to provide serial communication between the Target (nRF51) and the computer.
+
+The micro:bit V2 adds an internal I2C bus connected to the Interface MCU (KL27), the Target MCU (nRF52), and the motion sensors (in V1 the motions sensors are connected to the external I2C bus, connected only to the Target MCU (nRF51), more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)).
+This new I2C bus allows the Interface (KL27) to provide additional features to the  Target (nRF52), and to co-operate to set the board into different power modes (more info in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)).
+
+![I2C Diagram](img/i2c-diagram.png)
+
+The additional features provided by the Interface (KL27) via I2C are:
+- Device Information
+    - Board ID, DAPLink version, and more
+- Power Management
+    - As defined in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)
+- I2C Flash Storage
+    - The Interface (KL27) flash is 256 KBs, where 128KBs are reserved for non-volatile storage accessible to the Target (nRF52)
+
+
+## I2C Secondary addresses
+
+| I2C Secondary                                | 7-bit address |
 | -------------------------------------------- | ------------- |
 | KL27 (I2C nRF – KL27 config/comms interface) | 0x70          |
 | KL27 (I2C USB/HID interface)                 | 0x71          |
@@ -30,14 +60,14 @@ This is version 0.9.0 of the specification.
 
 ### Types of commands
 
-| Command          | CMD ID | Used by        |
-| ---------------- | ------ | -------------- |
-| `nop_cmd`        | 0x00   | master only    |
-| `read_request`   | 0x10   | master only    |
-| `read_response`  | 0x11   | slave only     |
-| `write_request`  | 0x12   | master & slave |
-| `write_response` | 0x13   | master & slave |
-| `error_response` | 0x20   | master & slave |
+| Command          | CMD ID | Used by          |
+| ---------------- | ------ | ---------------- |
+| `nop_cmd`        | 0x00   | main only        |
+| `read_request`   | 0x10   | main only        |
+| `read_response`  | 0x11   | secondary only   |
+| `write_request`  | 0x12   | main & secondary |
+| `write_response` | 0x13   | main & secondary |
+| `error_response` | 0x20   | main & secondary |
 
 ### Packet format for each command
 
@@ -182,7 +212,7 @@ This is version 0.9.0 of the specification.
 
 ### Examples
 
-- Read DAPLink Board version (nRF I2C master)
+- Read DAPLink Board version (nRF I2C main)
   1. `read_request` (cmd id + property) I2C Write: 0x10 0x01
   2. (KL27 processes cmd and asserts `COMBINED_SENSOR_INT` signal when response is ready)
   3. `read_response` (cmd id + property + size + data) I2C Read: 0x11 0x01 0x02 0x04 0x99
@@ -190,10 +220,10 @@ This is version 0.9.0 of the specification.
 
 ### Considerations
 
-- `read_request` can only be sent by the I2C master (nrf)
-    - The master (nRF) must wait for the `COMBINED_SENSOR_INT` signal to be asserted by the slave (KL27)
-- `write_request` can be sent by both slave and master.
-    - For the slave to initiate this, it must assert the interrupt signal first and then the master must poll (i2c read) the device for data.
+- `read_request` can only be sent by the I2C main (nrf)
+    - The main (nRF) must wait for the `COMBINED_SENSOR_INT` signal to be asserted by the secondary (KL27)
+- `write_request` can be sent by both secondary and main.
+    - For the secondary to initiate this, it must assert the interrupt signal first and then the main must poll (i2c read) the device for data.
 
 
 ## I2C Flash interface
@@ -252,9 +282,9 @@ KL27 storage memory layout:
 ### Flash Operations
 
 #### Reading/writing config data
-- For writing the config data (file name, file size and file visibility), the I2C Master has to send the 1B command ID followed by the corresponding config data. If the data size is unexpected, an error will be returned in the I2C response.
-- The I2C Response after a sucessful write opeartion will contain the corresponding command ID followed by the written config data which can be used as confirmation by the I2C master.
-- For reading the config data, the I2C Master has to send only the 1B command ID with no further data. The I2C response will then contain the config data.
+- For writing the config data (file name, file size and file visibility), the I2C main has to send the 1B command ID followed by the corresponding config data. If the data size is unexpected, an error will be returned in the I2C response.
+- The I2C Response after a successful write operation will contain the corresponding command ID followed by the written config data which can be used as confirmation by the I2C main.
+- For reading the config data, the I2C main has to send only the 1B command ID with no further data. The I2C response will then contain the config data.
 
 #### Write storage data
 
@@ -297,8 +327,8 @@ KL27 storage memory layout:
 - KL27 I2C buffer size: 1KB + 4 bytes
 - Storage writes should not trigger "hidden" sector erases, the nRF is
   responsible to write and erase
-- When writting to the config data first check if the data to be written is
-  different than present, avoid an erase-and-write opertion if it's the same
+- When writing to the config data first check if the data to be written is
+  different than present, avoid an erase-and-write operation if it's the same
 - USB should have higher priority than any I2C transaction
 
 ### Examples
@@ -346,7 +376,7 @@ KL27 storage memory layout:
 
 ### Universal Hex
 
-KL27 storage area should be writable via Universal Hex.
+KL27 storage area should be writeable via Universal Hex.
 
 
 ## HID Interface
