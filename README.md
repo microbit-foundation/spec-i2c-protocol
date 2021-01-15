@@ -11,7 +11,7 @@ The specification can be found in the `spec` folder.
 
 Other useful technical documentation:
 - [micro:bit Tech Site DAPLink page](https://tech.microbit.org/software/daplink-interface/)
-- [micro:bit I2C Specification](https://github.com/microbit-foundation/spec-i2c-protocol)
+- [micro:bit Power Management](https://github.com/microbit-foundation/spec-power-management/)
 - [micro:bit Tech Site pin and signals information](https://tech.microbit.org/hardware/schematic/)
 - micro:bit V2 schematic (TBC)
 
