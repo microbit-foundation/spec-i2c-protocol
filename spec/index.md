@@ -1,3 +1,13 @@
+---
+layout: page
+title: I2C Protocol Specification
+heading: I2C Protocol Specification
+description: Specification for the micro:bit I2C Protocol
+permalink: /software/spec-i2c-protocol
+ref: spec-i2c-protocol
+lang: en
+---
+
 # micro:bit I2C Protocol Specification
 
 This is version 0.9.1 of the specification.
