@@ -7,6 +7,7 @@ permalink: /software/spec-i2c-protocol
 ref: spec-i2c-protocol
 lang: en
 ---
+
 # micro:bit I2C Protocol Specification
 
 This is version 0.9.1 of the specification.
