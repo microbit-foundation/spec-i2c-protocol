@@ -12,7 +12,7 @@ lang: en
 
 This is version 0.9.1 of the specification.
 
-- [Glossary](#glosary)
+- [Glossary](#glossary)
 - [Introduction](#introduction)
 - [I2C Secondary addresses](#i2c-secondary-addresses)
 - [I2C nRF - KL27 config/comms interface](#i2c-nrf--kl27-configcomms-interface)
