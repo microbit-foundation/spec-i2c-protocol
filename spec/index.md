@@ -43,7 +43,7 @@ In micro:bit V1 there are UART and SWD signals connecting the Interface MCU (KL2
 The micro:bit V2 adds an internal I2C bus connected to the Interface MCU (KL27), the Target MCU (nRF52), and the motion sensors (in V1 the motions sensors are connected to the external I2C bus, connected only to the Target MCU (nRF51), more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)).
 This new I2C bus allows the Interface (KL27) to provide additional features to the  Target (nRF52), and to co-operate to set the board into different power modes (more info in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)).
 
-![I2C Diagram](https://tech.micribit.org/software/spec-i2c-protocol/spec/img/i2c-diagram.png)
+![I2C Diagram](https://tech.microbit.org/software/spec-i2c-protocol/spec/img/i2c-diagram.png)
 
 The additional features provided by the Interface (KL27) via I2C are:
 - Device Information
