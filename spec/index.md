@@ -263,9 +263,11 @@ KL27 storage memory layout:
 ↓ KL27 flash address 0x20000                                ↓ KL27 flash address0x40000
 ↓         ↓ KL27 flash address 0x20400                      ↓
 ┌---------┬-------------------------------------------------┐
-|[config] |[data                           [ DAL’s config ]]|
+| KL27    | storage data                                    |
+| config  |[ file.ext -------------------- ][ DAL’s config ]|
 └---------┴-------------------------------------------------┘
-          ↑ storage address 0x0000         ↑ storage address set by file size
+          ↑ storage address 0x0000          ↑ address set by file size
+                 ↑ base64 start address (anywhere inside file.ext range)
 ```
 
 - config
@@ -292,8 +294,12 @@ KL27 storage memory layout:
     - default → DATA.BIN
   - File size (from start of data section)  (`0x02`)
     - 4B size in bytes (MSB First)
-    - default → 126 KBs
+    - default → 129024 (126 KBs)
     - max size is 126 KBs (128KB - 1KB for flash interface config and 1KB for DAL's config)
+  - Base64 encoding start address (from start of data section)  (`0x09`)
+    - 4B size in bytes (MSB First)
+    - default → 129024 (end of file address)
+    - max value is the end of file adress
   - Enable file visible in MSD  (`0x03`)
     - 1B visibility
     - default → false
