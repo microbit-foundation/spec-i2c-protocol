@@ -309,6 +309,7 @@ KL27 storage memory layout:
   - Enable file visible in MSD  (`0x03`)
     - 1B visibility
     - default → false
+    - A remount is needed for the file visibility change to take effect
 - Write config data to flash    (`0x04`)
     - Handles sector erase if RAM config data is different than Flash config data
 - Erase all config  (`0x05`)
