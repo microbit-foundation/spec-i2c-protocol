@@ -302,7 +302,7 @@ KL27 storage memory layout:
   - Set encoding window (`0x09`)
     - 4B Encoding window start (MSB First)
     - 4B Encoding window end (MSB First)
-    - default → ????
+    - default → 0 for both values
     - min value is 0, max value is the end of file adress
     - If encoding window start is equal to encoding window end, no encoding will be done
     - A remount is needed for the encoding window to take effect
