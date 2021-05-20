@@ -260,14 +260,15 @@ Value only includes major version
 KL27 storage memory layout:
 
 ```
-↓ KL27 flash address 0x20000                                ↓ KL27 flash address0x40000
+↓ KL27 flash address 0x20000                                ↓ KL27 flash address 0x40000
 ↓         ↓ KL27 flash address 0x20400                      ↓
 ┌---------┬-------------------------------------------------┐
 | KL27    | storage data                                    |
 | config  |[ file.ext -------------------- ][ DAL’s config ]|
 └---------┴-------------------------------------------------┘
           ↑ storage address 0x0000          ↑ address set by file size
-                 ↑ base64 start address (anywhere inside file.ext range)
+                ↑ encoding window start address (anywhere inside file.ext range)
+                            ↑ encoding window end address (anywhere inside file.ext range)
 ```
 
 - config
