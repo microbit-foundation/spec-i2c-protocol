@@ -10,7 +10,7 @@ lang: en
 
 # micro:bit I2C Protocol Specification
 
-This is version 1.00 of the specification.
+This is version 1.01 of the specification.
 
 - [Glossary](#glossary)
 - [Versioning](#versioning)
@@ -163,10 +163,12 @@ Value only includes major version
 <td>Size 1B e.g. 0x01<br />
 <pre>typedef enum {
     PWR_SOURCE_NONE = 0,
-    PWR_USB_ONLY,
-    PWR_BATT_ONLY,
-    PWR_USB_AND_BATT
-} power_source_t;</pre></td>
+    PWR_USB_ONLY = 0b01,
+    PWR_BATT_ONLY = 0b10,
+    PWR_USB_AND_BATT = 0b11  // (*)
+} power_source_t;</pre>
+* On USB power the battery reading (bit 1) might not be correct due to a hardware bug
+</td>
 </tr>
 <tr class="odd">
 <td>Power consumption (R)</td>
@@ -419,3 +421,4 @@ This is not yet implemented.
 | Version | Changes |
 |---------|---------|
 | 1.00    | Initial release, as implemented in DAPLink 0255 |
+| 1.01    | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
