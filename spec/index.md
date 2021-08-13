@@ -10,7 +10,7 @@ lang: en
 
 # micro:bit I2C Protocol Specification
 
-This is version 1.01 of the specification.
+This is version 2.00 of the specification.
 
 - [Glossary](#glossary)
 - [Versioning](#versioning)
@@ -20,6 +20,7 @@ This is version 1.01 of the specification.
 - [I2C Flash interface](#i2c-flash-interface)
 - [I2C HID Interface](#i2c-hid-interface)
 - [Doc Updates](#doc-updates)
+
 
 ## Glossary
 
@@ -422,3 +423,4 @@ This is not yet implemented.
 |---------|---------|
 | 1.00    | Initial release, as implemented in DAPLink 0255 |
 | 1.01    | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
+| 2.00    |         |
