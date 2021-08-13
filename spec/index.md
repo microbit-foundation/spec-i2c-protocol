@@ -10,15 +10,16 @@ lang: en
 
 # micro:bit I2C Protocol Specification
 
-This is version 0.9.1 of the specification.
+This is version 1.00 of the specification.
 
 - [Glossary](#glossary)
+- [Versioning](#versioning)
 - [Introduction](#introduction)
 - [I2C Secondary addresses](#i2c-secondary-addresses)
 - [I2C nRF - KL27 config/comms interface](#i2c-nrf--kl27-configcomms-interface)
 - [I2C Flash interface](#i2c-flash-interface)
-- [HID Interface](#hid-interface)
-
+- [I2C HID Interface](#i2c-hid-interface)
+- [Doc Updates](#doc-updates)
 
 ## Glossary
 
@@ -31,6 +32,16 @@ This is version 0.9.1 of the specification.
 | Storage       | Flash available in the KL27 for micro:bit data and config storage |
 | SWD           | [Serial Wire Debug](https://developer.arm.com/architectures/cpu-architecture/debug-visibility-and-trace/coresight-architecture/serial-wire-debug) |
 | UART          | [Universal asynchronous receiver-transmitter](https://en.wikipedia.org/wiki/Universal_asynchronous_receiver-transmitter) |
+
+
+## Versioning
+
+The version follows a `major.minor` configuration.
+
+- `major`: Indicates a change or addition to the procotol, this is usually accompanied by a new DAPLink release.
+- `minor`: Indicates an update, fix, or clarification to the documentation **only**. No changes required to the protocol implementations.
+
+The `I2C protocol version` property returns only the major version.
 
 
 ## Introduction
@@ -136,7 +147,10 @@ The additional features provided by the Interface (KL27) via I2C are:
 <tr class="even">
 <td>I2C protocol version (R)</td>
 <td>0x02</td>
-<td>Size: 2B e.g. 0x0001</td>
+<td>
+Size: 2B e.g. 0x0001<br />
+Value only includes major version
+</td>
 </tr>
 <tr class="odd">
 <td>DAPLink version (R)</td>
@@ -205,6 +219,8 @@ The additional features provided by the Interface (KL27) via I2C are:
 </tr>
 </tbody>
 </table>
+
+
 
 #### Error codes
 
@@ -388,7 +404,18 @@ KL27 storage memory layout:
 
 KL27 storage area should be writeable via Universal Hex.
 
+This is not yet implemented.
 
-## HID Interface
+
+## I2C HID Interface
 
 All I2C features should be available via HID interface, so that it can be accessed via WebUSB.
+
+This is not yet implemented.
+
+
+## Doc Updates
+
+| Version | Changes |
+|---------|---------|
+| 1.00    | Initial release, as implemented in DAPLink 0255 |
