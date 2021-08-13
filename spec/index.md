@@ -445,4 +445,5 @@ This is not yet implemented.
 |---------|---------|
 | 1.00    | Initial release, as implemented in DAPLink 0255 |
 | 1.01    | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
-| 2.00    |         |
+| 2.00    | Add "Set encoding window" command to the I2C Flash interface [PR #9](https://github.com/microbit-foundation/spec-i2c-protocol/pull/9) |
+|         |         |
