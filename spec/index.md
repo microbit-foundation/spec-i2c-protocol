@@ -237,7 +237,7 @@ The additional features provided by the Interface (KL27) via I2C are:
 - `write_request` can be sent by both secondary and main.
     - For the secondary to initiate this, it must assert the interrupt signal first and then the main must poll (i2c read) the device for data.
 - I2C transactions must not overlap. Every I2C Write, must be followed by an I2C Read. 
-    - I2C Reads can be triggered by false positives on the `COMBINED_SENSOR_INT` signal. In case a response is not ready by the the secondary (KL27), the busy error code will be returned and the main (nRF) should re-attempt to read the response when the `COMBINED_SENSOR_INT` signal is asserted.
+    - I2C Reads can be triggered by other I2C devices activating the shared `COMBINED_SENSOR_INT` interrupt signal. In case a response is not ready by the secondary (KL27), the busy error code will be returned and the main (nRF) should re-attempt to read the response when the `COMBINED_SENSOR_INT` signal is asserted.
 
 
 ## I2C Flash interface
