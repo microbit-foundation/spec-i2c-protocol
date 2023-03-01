@@ -264,12 +264,15 @@ Value only includes major version
 KL27 storage memory layout:
 
 ```
-↓ KL27 flash address 0x20000                                ↓ KL27 flash address0x40000
+↓ KL27 flash address 0x20000                                ↓ KL27 flash address 0x40000
 ↓         ↓ KL27 flash address 0x20400                      ↓
 ┌---------┬-------------------------------------------------┐
-|[config] |[data                           [ DAL’s config ]]|
+| KL27    | storage data                                    |
+| config  |[ file.ext -------------------- ][ DAL’s config ]|
 └---------┴-------------------------------------------------┘
-          ↑ storage address 0x0000         ↑ storage address set by file size
+          ↑ storage address 0x0000          ↑ address set by file size
+                ↑ encoding window start address (anywhere inside file.ext range)
+                            ↑ encoding window end address (anywhere inside file.ext range)
 ```
 
 - config
@@ -294,13 +297,23 @@ KL27 storage memory layout:
   - File name (includes extension)  (cmd id `0x01`)
     - 11B uppercase characters following 8.3 format (e.g. `"DATA    BIN"`)
     - default → DATA.BIN
+    - A remount is needed for the file name change to take effect
   - File size (from start of data section)  (`0x02`)
     - 4B size in bytes (MSB First)
-    - default → 126 KBs
+    - default → 129024 (126 KBs)
     - max size is 126 KBs (128KB - 1KB for flash interface config and 1KB for DAL's config)
+    - A remount is needed for the file size change to take effect
+  - Set encoding window (`0x09`)
+    - 4B Encoding window start (MSB First)
+    - 4B Encoding window end (MSB First)
+    - default → 0 for both values
+    - min value is 0, max value is the end of file adress
+    - If encoding window start is equal to encoding window end, no encoding will be done
+    - A remount is needed for the encoding window to take effect
   - Enable file visible in MSD  (`0x03`)
     - 1B visibility
     - default → false
+    - A remount is needed for the file visibility change to take effect
 - Write config data to flash    (`0x04`)
     - Handles sector erase if RAM config data is different than Flash config data
 - Erase all config  (`0x05`)
@@ -407,6 +420,15 @@ KL27 storage memory layout:
        I2C Addr ↑  cmd id ↑
 ```
 
+#### Set encoding window
+- Set encoding window to first 1KB
+```
+  I2C Write:  [0x72,    0x09,   0x00,0x00,0x00,0x00,    0x00,0x00,0x04,0x00]]
+       I2C Addr ↑  cmd id ↑    enc window start ↑        enc window end ↑
+  I2C Read:   [0x72,    0x09,   0x00,0x00,0x00,0x00,    0x00,0x00,0x04,0x00]]
+       I2C Addr ↑  cmd id ↑    enc window start ↑        enc window end ↑
+```
+
 ### Universal Hex
 
 KL27 storage area should be writeable via Universal Hex.
@@ -428,4 +450,4 @@ This is not yet implemented.
 | 1.00    | Initial release, as implemented in DAPLink 0255 |
 | 1.01    | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
 | 2.00    | Add busy flag error code |
-
+|         | Add "Set encoding window" command to the I2C Flash interface [PR #9](https://github.com/microbit-foundation/spec-i2c-protocol/pull/9) |
