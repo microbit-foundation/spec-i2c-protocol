@@ -10,7 +10,7 @@ lang: en
 
 # micro:bit I2C Protocol Specification
 
-This is version 2.00 of the specification.
+This is version 2.01 of the specification.
 
 - [Glossary](#glossary)
 - [Versioning](#versioning)
@@ -87,9 +87,9 @@ The additional features provided by the Interface (KL27) via I2C are:
 | `nop_cmd`        | 0x00   | main only        |
 | `read_request`   | 0x10   | main only        |
 | `read_response`  | 0x11   | secondary only   |
-| `write_request`  | 0x12   | main & secondary |
-| `write_response` | 0x13   | main & secondary |
-| `error_response` | 0x20   | main & secondary |
+| `write_request`  | 0x12   | main only        |
+| `write_response` | 0x13   | secondary only   |
+| `error_response` | 0x20   | secondary only   |
 
 ### Packet format for each command
 
@@ -229,7 +229,6 @@ Value only includes major version
 
 | Error                                               | Error Code |
 | --------------------------------------------------- | ---------- |
-| Success                                             | 0x30       |
 | Incomplete command                                  | 0x31       |
 | Unknown command                                     | 0x32       |
 | Command disallowed                                  | 0x33       |
@@ -451,3 +450,5 @@ This is not yet implemented.
 | 1.01    | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
 | 2.00    | Add busy flag error code |
 |         | Add "Set encoding window" command to the I2C Flash interface [PR #9](https://github.com/microbit-foundation/spec-i2c-protocol/pull/9) |
+| 2.01    | Fix documentation bug where commands were marked as bidirectional |
+|         | Removed "success" error code as it is unused |
