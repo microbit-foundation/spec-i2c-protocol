@@ -10,14 +10,14 @@ lang: en
 
 # micro:bit I2C Protocol Specification
 
-This is version 2.01 of the specification.
+This is version 2.02 of the specification.
 
 - [Glossary](#glossary)
 - [Versioning](#versioning)
 - [Introduction](#introduction)
 - [I2C Secondary addresses](#i2c-secondary-addresses)
-- [I2C nRF - KL27 config/comms interface](#i2c-nrf--kl27-configcomms-interface)
-- [I2C Flash interface](#i2c-flash-interface)
+- [I2C Interface MCU config/comms interface](#i2c-interface-mcu-configcomms-interface)
+- [I2C Flash Storage Interface](#i2c-flash-storage-interface)
 - [I2C HID Interface](#i2c-hid-interface)
 - [Doc Updates](#doc-updates)
 
@@ -30,7 +30,9 @@ This is version 2.01 of the specification.
 | I2C           | [Inter-Integrated Circuit](https://en.wikipedia.org/wiki/I%C2%B2C) bus |
 | I2C main      | I2C node in control of the clock and initiating transactions |
 | I2C secondary | I2C peripheral that responds to the I2C main |
-| Storage       | Flash available in the KL27 for micro:bit data and config storage |
+| Target MCU    | The micro:bit microcontroller that runs the user code. The I2C main role in the I2C bus. |
+| Interface MCU | The micro:bit microcontroller that provides USB functionality and the I2C secondary role described in this protocol. |
+| Storage       | Flash available in the Interface MCU for micro:bit data and config storage |
 | SWD           | [Serial Wire Debug](https://developer.arm.com/architectures/cpu-architecture/debug-visibility-and-trace/coresight-architecture/serial-wire-debug) |
 | UART          | [Universal asynchronous receiver-transmitter](https://en.wikipedia.org/wiki/Universal_asynchronous_receiver-transmitter) |
 
@@ -39,7 +41,7 @@ This is version 2.01 of the specification.
 
 The version follows a `major.minor` configuration.
 
-- `major`: Indicates a change or addition to the procotol, this is usually accompanied by a new DAPLink release.
+- `major`: Indicates a change or addition to the protocol, this is usually accompanied by a new DAPLink release.
 - `minor`: Indicates an update, fix, or clarification to the documentation **only**. No changes required to the protocol implementations.
 
 The `I2C protocol version` property returns only the major version.
@@ -52,33 +54,38 @@ More information can be found in the [Tech Site DAPLink page](https://tech.micro
 
 In micro:bit V1 there are UART and SWD signals connecting the Interface MCU (KL26) and the Target MCU (nRF51). These are used to program the Target MCU (nRF51) and to provide serial communication between the Target (nRF51) and the computer.
 
-The micro:bit V2 adds an internal I2C bus connected to the Interface MCU (KL27), the Target MCU (nRF52), and the motion sensors (in V1 the motions sensors are connected to the external I2C bus, connected only to the Target MCU (nRF51), more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)).
-This new I2C bus allows the Interface (KL27) to provide additional features to the  Target (nRF52), and to co-operate to set the board into different power modes (more info in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)).
+The micro:bit V2 adds an internal I2C bus connected to:
+- The Interface MCU (KL27 in micro:bit V2.0 or nRF52 in micro:bit V2.2)
+- The Target MCU (nRF52)
+- The motion sensors
+    - In micro:bit V1 the motions sensors are connected to the external I2C bus, only connected to the Target MCU, more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)
+
+This new internal I2C bus allows the Interface MCU to provide additional features to the Target MCU, and to co-operate to set the board into different power modes (more info in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)).
 
 ![I2C Diagram](https://tech.microbit.org/docs/software/spec-i2c-protocol/spec/img/i2c-diagram.png)
 
-The additional features provided by the Interface (KL27) via I2C are:
+The additional features provided by the Interface MCU via I2C are:
 - Device Information
     - Board ID, DAPLink version, and more
 - Power Management
     - As defined in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)
 - I2C Flash Storage
-    - The Interface (KL27) flash is 256 KBs, where 128KBs are reserved for non-volatile storage accessible to the Target (nRF52)
+    - The Interface MCU flash is 256 KBs, where 128KBs are reserved for non-volatile storage accessible to the Target MCU
 
 
 ## I2C Secondary addresses
 
 | I2C Secondary                                | 7-bit address |
 | -------------------------------------------- | ------------- |
-| KL27 (I2C nRF – KL27 config/comms interface) | 0x70          |
-| KL27 (I2C USB/HID interface)                 | 0x71          |
-| KL27 (I2C Flash interface)                   | 0x72          |
-| FXOS8700CQ                                   | 0x1F          |
+| Interface MCU (I2C config/comms interface)   | 0x70          |
+| Interface MCU reserved (unused)              | 0x71          |
+| Interface MCU (I2C Flash Storage interface)  | 0x72          |
+| FXOS8700CQ Combined motion sensor            | 0x1F          |
 | LSM303AGR Accelerometer                      | 0x19          |
 | LSM303AGR Magnetometer                       | 0x1E          |
 
 
-## I2C nRF – KL27 config/comms interface
+## I2C Interface MCU config/comms interface
 
 ### Types of commands
 
@@ -193,10 +200,12 @@ Value only includes major version
 } main_usb_connect_t;</pre></td>
 </tr>
 <tr class="odd">
-<td>KL27 Power mode (W)</td>
+<td>Interface Power mode (W)</td>
 <td>0x07</td>
 <td>Size 1B e.g. 0x08<br />
-<pre>kAPP_PowerModeVlls0 = 0x08</pre></td>
+<pre>Power Down = 0x08</pre>
+For more info: <a href="https://tech.microbit.org/software/spec-power-management/" target="_blank">Power Management Spec</a>
+</td>
 </tr>
 <tr class="even">
 <td>Power LED Sleep state (W)</td>
@@ -242,31 +251,31 @@ Value only includes major version
 
 ### Examples
 
-- Read DAPLink Board version (nRF I2C main)
-  1. `read_request` (cmd id + property) I2C Write: 0x10 0x01
-  2. (KL27 processes cmd and asserts `COMBINED_SENSOR_INT` signal when response is ready)
-  3. `read_response` (cmd id + property + size + data) I2C Read: 0x11 0x01 0x02 0x04 0x99
-  4. (KL27 releases `COMBINED_SENSOR_INT` signal)
+- Read DAPLink Board version (Target I2C main)
+  1. `read_request` (cmd id + property) I2C Write: `0x10` `0x01`
+  2. (Interface processes cmd and asserts `COMBINED_SENSOR_INT` signal when response is ready)
+  3. `read_response` (cmd id + property + size + data) I2C Read: `0x11` `0x01` `0x02` `0x04` `0x99`
+  4. (Interface releases `COMBINED_SENSOR_INT` signal)
 
 ### Considerations
 
-- `read_request` can only be sent by the I2C main (nrf)
-    - The main (nRF) must wait for the `COMBINED_SENSOR_INT` signal to be asserted by the secondary (KL27)
+- `read_request` can only be sent by the Target I2C main
+    - The I2C main (Target) must wait for the `COMBINED_SENSOR_INT` signal to be asserted by the secondary (Interface)
 - `write_request` can be sent by both secondary and main.
     - For the secondary to initiate this, it must assert the interrupt signal first and then the main must poll (i2c read) the device for data.
-- I2C transactions must not overlap. Every I2C Write, must be followed by an I2C Read. 
-    - I2C Reads can be triggered by other I2C devices activating the shared `COMBINED_SENSOR_INT` interrupt signal. In case a response is not ready by the secondary (KL27), the busy error code will be returned and the main (nRF) should re-attempt to read the response when the `COMBINED_SENSOR_INT` signal is asserted.
+- I2C transactions must not overlap. Every I2C Write, must be followed by an I2C Read.
+    - I2C Reads can be triggered by other I2C devices activating the shared `COMBINED_SENSOR_INT` interrupt signal. In case a response is not ready by the secondary (Interface), the busy error code will be returned and the main (Target) should re-attempt to read the response when the `COMBINED_SENSOR_INT` signal is asserted.
 
 
-## I2C Flash interface
+## I2C Flash Storage Interface
 
-KL27 storage memory layout:
+Interface storage memory layout:
 
 ```
-↓ KL27 flash address 0x20000                                ↓ KL27 flash address 0x40000
-↓         ↓ KL27 flash address 0x20400                      ↓
+↓ Interface flash address 0x20000                           ↓ Interface flash address 0x40000
+↓         ↓ Interface flash address 0x20400                 ↓
 ┌---------┬-------------------------------------------------┐
-| KL27    | storage data                                    |
+| Interf. | storage data                                    |
 | config  |[ file.ext -------------------- ][ DAL’s config ]|
 └---------┴-------------------------------------------------┘
           ↑ storage address 0x0000          ↑ address set by file size
@@ -275,12 +284,12 @@ KL27 storage memory layout:
 ```
 
 - config
-    - Controlled by KL27
-    - nRF reads/write data fields via I2C commands
+    - Controlled by the Interface MCU
+    - Target MCU reads/write data fields via I2C commands
 - data
-    - Controlled by nRF
-    - nRF reads/write bytes via I2C commands
-    - Storage address range: 0x00000-max_size
+    - Controlled by Target MCU
+    - Target MCU reads/write bytes via I2C commands
+    - Storage address range: 0x00000 to max_size
 
 ### Protocol
 
@@ -288,7 +297,7 @@ KL27 storage memory layout:
 - All transactions start with:
     - 1 byte command ID
     - N byte data depending on command
-- For KL27 responses, KL27 to hold interrupt until success/error messages have been served  
+- For Interface responses, the Interface will hold interrupt until success/error messages have been served
 
 ### Commands
 
@@ -341,7 +350,7 @@ KL27 storage memory layout:
     - Size has to be a multiple of 4 bytes
     - Address has to be aligned to a 4 byte boundary
     - Bound check
-- KL27 can clock stretch
+- Interface can clock stretch
 
 #### Read storage data
 
@@ -360,17 +369,17 @@ KL27 storage memory layout:
     - Addresses have to be sector align
     - End address >= Start address
     - Bound check
-- On errors KL27 to trigger interrupt and send error code
-- On success KL27 to trigger interrupt and send success message
+- On errors Interface to trigger interrupt and send error code
+- On success Interface to trigger interrupt and send success message
 - KL to provide some kind of status read command
 
-### KL27 behaviour
+### Interface I2C secondary behaviour
 
 - Before enumeration it checks if it should show the file on the MSD
     - It sets the file name from the config
     - It sets the file size from the config
-- KL27 I2C buffer size: 1KB + 4 bytes
-- Storage writes should not trigger "hidden" sector erases, the nRF is
+- Interface I2C buffer size: 1KB + 4 bytes
+- Storage writes should not trigger "hidden" sector erases, the Target MCU is
   responsible to write and erase
 - When writing to the config data first check if the data to be written is
   different than present, avoid an erase-and-write operation if it's the same
@@ -430,7 +439,7 @@ KL27 storage memory layout:
 
 ### Universal Hex
 
-KL27 storage area should be writeable via Universal Hex.
+Interface Storage area should be writeable via Universal Hex.
 
 This is not yet implemented.
 
@@ -452,3 +461,4 @@ This is not yet implemented.
 |         | Add "Set encoding window" command to the I2C Flash interface [PR #9](https://github.com/microbit-foundation/spec-i2c-protocol/pull/9) |
 | 2.01    | Fix documentation bug where commands were marked as bidirectional |
 |         | Removed "success" error code as it is unused |
+| 2.02    | Generalise the "I2C secondary" and "KL27" references as "Interface", as V2.0 and V2.2 use different MCUs (KL27 and nRF52) |
