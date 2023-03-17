@@ -10,7 +10,7 @@ lang: en
 
 # micro:bit I2C Protocol Specification
 
-This is version 2.02 of the specification.
+This is version 2.03 of the specification.
 
 - [Glossary](#glossary)
 - [Versioning](#versioning)
@@ -49,16 +49,21 @@ The `I2C protocol version` property returns only the major version.
 
 ## Introduction
 
-The micro:bit contains two microcontrollers, the Interface MCU which provides the USB functionality, and the Target MCU where the user code runs.
-More information can be found in the [Tech Site DAPLink page](https://tech.microbit.org/software/daplink-interface/).
+The micro:bit contains two microcontrollers (more info in the [Tech Site DAPLink page](https://tech.microbit.org/software/daplink-interface/)):
 
-In micro:bit V1 there are UART and SWD signals connecting the Interface MCU (KL26) and the Target MCU (nRF51). These are used to program the Target MCU (nRF51) and to provide serial communication between the Target (nRF51) and the computer.
+1. Interface MCU which provides the USB functionality
+2. Target MCU where the user code runs
 
-The micro:bit V2 adds an internal I2C bus connected to:
-- The Interface MCU (KL27 in micro:bit V2.0 or nRF52 in micro:bit V2.2)
-- The Target MCU (nRF52)
-- The motion sensors
-    - In micro:bit V1 the motions sensors are connected to the external I2C bus, only connected to the Target MCU, more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)
+In micro:bit V1 there are UART and SWD signals connecting the Interface MCU (KL26) and the Target MCU (nRF51). These are used for the Interface MCU (KL26) to program the Target MCU (nRF51) and to provide serial communication between the Target (nRF51) and the computer.
+
+In micro:bit V1 there is only one I2C bus, connecting the Target MCU to the motions sensors, and the bus is routed to the edge connector (more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)).
+
+The micro:bit V2 has two I2C buses, an external bus connected from the Target MCU to the edge connector only, and an internal I2C bus connecting:
+- The Target MCU (nRF52), as the I2C main device
+- The Interface MCU (KL27 in micro:bit V2.0 or nRF52 in micro:bit V2.2), as an I2C secondary device
+- The motion sensors, as I2C secondary devices
+
+And all the I2C secondary devices shared a combined interrupt signal to the Target MCU.
 
 This new internal I2C bus allows the Interface MCU to provide additional features to the Target MCU, and to co-operate to set the board into different power modes (more info in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)).
 
@@ -75,6 +80,10 @@ The additional features provided by the Interface MCU via I2C are:
 
 ## I2C Secondary addresses
 
+The Interface MCU has reserved three I2C secondary addresses, although it is only using two at the moment, one for the "config/comms" and another for the "I2C Flash Storage".
+
+The addresses of the motion sensors are also included in this table for reference.
+
 | I2C Secondary                                | 7-bit address |
 | -------------------------------------------- | ------------- |
 | Interface MCU (I2C config/comms interface)   | 0x70          |
@@ -89,150 +98,206 @@ The additional features provided by the Interface MCU via I2C are:
 
 ### Types of commands
 
-| Command          | CMD ID | Used by          |
-| ---------------- | ------ | ---------------- |
-| `nop_cmd`        | 0x00   | main only        |
-| `read_request`   | 0x10   | main only        |
-| `read_response`  | 0x11   | secondary only   |
-| `write_request`  | 0x12   | main only        |
-| `write_response` | 0x13   | secondary only   |
-| `error_response` | 0x20   | secondary only   |
+| Command          | CMD ID | Used by          | Description |
+| ---------------- | ------ | ---------------- |-------------|
+| `nop_cmd`        | 0x00   | main only        | A command that does nothing, used for waking up the Interface MCU due to a chip errata. |
+| `read_request`   | 0x10   | main only        | Request by the I2C main to read data from the I2C secondary. |
+| `read_response`  | 0x11   | secondary only   | Response from the I2C secondary from a read request |
+| `write_request`  | 0x12   | main only        | Request by the I2C main to write data to the I2C secondary. |
+| `write_response` | 0x13   | secondary only   | Response from the I2C secondary from a write request (indicates correct receipt of command) |
+| `error_response` | 0x20   | secondary only   | Response from the I2C secondary indicating an error |
 
 ### Packet format for each command
 
 #### `nop_cmd`
 
-|             |
+```
 | ----------- |
 | CMD ID (1B) |
+| ----------- |
+```
 
 #### `read_request`
 
-|             |                  |
+```
 | ----------- | ---------------- |
 | CMD ID (1B) | Property ID (1B) |
+| ----------- | ---------------- |
+```
 
 #### `read_response`
 
-|             |                  |                |           |
+```
 | ----------- | ---------------- | -------------- | --------- |
 | CMD ID (1B) | Property ID (1B) | Data size (1B) | Data (NB) |
+| ----------- | ---------------- | -------------- | --------- |
+```
 
 #### `write_request`
 
-|             |                  |                |           |
+```
 | ----------- | ---------------- | -------------- | --------- |
 | CMD ID (1B) | Property ID (1B) | Data size (1B) | Data (NB) |
+| ----------- | ---------------- | -------------- | --------- |
+```
 
 #### `write_response`
 
-|             |                  |
+```
 | ----------- | ---------------- |
 | CMD ID (1B) | Property ID (1B) |
+| ----------- | ---------------- |
+```
 
 #### `error_response`
 
-|             |                 |
+```
 | ----------- | --------------- |
 | CMD ID (1B) | Error code (1B) |
+| ----------- | --------------- |
+```
 
 ### Properties
 
 <table>
 <thead>
 <tr class="header">
-<th>Property</th>
-<th>Property ID</th>
-<th>Data</th>
+    <th>Property</th>
+    <th>R/W</th>
+    <th>Property ID</th>
+    <th>Size (bytes)</th>
+    <th>Data</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>DAPLink Board version (R)</td>
-<td>0x01</td>
-<td>Size: 2B e.g. 0x9904</td>
+    <td>DAPLink Board version</td>
+    <td>R</td>
+    <td>0x01</td>
+    <td>2</td>
+    <td>e.g. 0x9904</td>
 </tr>
 <tr class="even">
-<td>I2C protocol version (R)</td>
-<td>0x02</td>
-<td>
-Size: 2B e.g. 0x0001<br />
-Value only includes major version
-</td>
+    <td>I2C protocol version</td>
+    <td>R</td>
+    <td>0x02</td>
+    <td>2</td>
+    <td>
+        e.g. 0x0001<br />
+        Value only includes major version
+    </td>
 </tr>
 <tr class="odd">
-<td>DAPLink version (R)</td>
-<td>0x03</td>
-<td>Size 2B e.g. 0x00FD</td>
+    <td>DAPLink version</td>
+    <td>R</td>
+    <td>0x03</td>
+    <td>2</td>
+    <td>e.g. 0x00FD</td>
 </tr>
 <tr class="even">
-<td>Power state (R)</td>
-<td>0x04</td>
-<td>Size 1B e.g. 0x01<br />
-<pre>typedef enum {
+    <td>Power state</td>
+    <td>R</td>
+    <td>0x04</td>
+    <td>1</td>
+    <td>
+        e.g. 0x01 for "USB Only"<br />
+<pre>
+typedef enum {
     PWR_SOURCE_NONE = 0,
     PWR_USB_ONLY = 0b01,
     PWR_BATT_ONLY = 0b10,
     PWR_USB_AND_BATT = 0b11  // (*)
-} power_source_t;</pre>
-* On USB power the battery reading (bit 1) might not be correct due to a hardware bug
-</td>
+} power_source_t;
+</pre>
+        "Source None" indicates the micro:bit is powered via the edge connector.<br />
+        * On USB power the battery reading (bit 1) might not be correct due to a hardware bug
+    </td>
 </tr>
 <tr class="odd">
-<td>Power consumption (R)</td>
-<td>0x05</td>
-<td>Size 8B <br />
-<pre>4B for bat_sense voltage
-4B for vin voltage
-(units in microvolts uint32)</pre></td>
+    <td>Power consumption</td>
+    <td>R</td>
+    <td>0x05</td>
+    <td>8</td>
+    <td>
+        First 4B for bat_sense voltage<br>
+        Second 4B for vin voltage<br>
+        Units in microvolts
+    </td>
 </tr>
 <tr class="even">
-<td>USB enumeration state (R)</td>
-<td>0x06</td>
-<td>Size 1B e.g. 0x02<br />
-<pre>typedef enum main_usb_connect {
-    USB_DISCONNECTED,
+    <td>USB enumeration state</td>
+    <td>R</td>
+    <td>0x06</td>
+    <td>1</td>
+    <td>
+        e.g. 0x02 for USB Connected<br />
+<pre>
+typedef enum main_usb_connect {
+    USB_DISCONNECTED = 0,
     USB_CONNECTING,
     USB_CONNECTED,
     USB_CHECK_CONNECTED,
     USB_CONFIGURED,
     USB_DISCONNECTING
-} main_usb_connect_t;</pre></td>
+} main_usb_connect_t;
+</pre>
+    </td>
 </tr>
 <tr class="odd">
-<td>Interface Power mode (W)</td>
-<td>0x07</td>
-<td>Size 1B e.g. 0x08<br />
-<pre>Power Down = 0x08</pre>
-For more info: <a href="https://tech.microbit.org/software/spec-power-management/" target="_blank">Power Management Spec</a>
-</td>
+    <td>Interface Power mode</td>
+    <td>W</td>
+    <td>0x07</td>
+    <td>1</td>
+    <td>
+        e.g. 0x08<br />
+        <pre>Power Down = 0x08</pre>
+        There is currently only a single option, which is to request the Interface Power Down mode.
+        For more info: <a href="https://tech.microbit.org/software/spec-power-management/" target="_blank">Power Management Spec</a>
+    </td>
 </tr>
 <tr class="even">
-<td>Power LED Sleep state (W)</td>
-<td>0x08</td>
-<td>Size 1B e.g. 0x01<br />
-<pre>0x00 -> OFF
-0x01-0xFF -> ON</pre></td>
+    <td>Power LED Sleep state</td>
+    <td>W</td>
+    <td>0x08</td>
+    <td>1</td>
+    <td>
+        e.g. 0x01<br />
+<pre>
+0x00 -> OFF
+0x01 to 0xFF -> ON
+</pre>
+    </td>
 </tr>
 <tr class="odd">
-<td>User event (R asynch)</td>
-<td>0x09</td>
-<td>Size 1B e.g. 0x01<br />
-<pre>0x01 -> Wakeup from reset button (not used)
+    <td>User event</td>
+    <td>R async</td>
+    <td>0x09</td>
+    <td>1</td>
+    <td>
+        e.g. 0x01<br />
+<pre>
+0x01 -> Wakeup from reset button (not used)
 0x02 -> Wakeup from WAKE_ON_EDGE
-0x03 -> reset button long press</pre></td>
+0x03 -> reset button long press
+</pre>
+        This is the only `read_response` that originates from the Interface, without a `read_request`.
+        Triggered when the reset button is pressed, or USB has been inserted.
+    </td>
 </tr>
 <tr class="even">
-<td>Automatic sleep (W)</td>
-<td>0x0A</td>
-<td>Size 1B e.g. 0x01<br />
-<pre>0x00 -> OFF
-0x01-0xFF -> ON</pre></td>
+    <td>Automatic sleep</td>
+    <td>W</td>
+    <td>0x0A</td>
+    <td>1</td>
+    <td>e.g. 0x01<br />
+<pre>
+0x00 -> OFF
+0x01-0xFF -> ON
+</pre>
+    </td>
 </tr>
 </tbody>
 </table>
-
-
 
 #### Error codes
 
@@ -453,12 +518,20 @@ This is not yet implemented.
 
 ## Doc Updates
 
-| Version | Changes |
-|---------|---------|
-| 1.00    | Initial release, as implemented in DAPLink 0255 |
-| 1.01    | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
-| 2.00    | Add busy flag error code |
-|         | Add "Set encoding window" command to the I2C Flash interface [PR #9](https://github.com/microbit-foundation/spec-i2c-protocol/pull/9) |
-| 2.01    | Fix documentation bug where commands were marked as bidirectional |
-|         | Removed "success" error code as it is unused |
-| 2.02    | Generalise the "I2C secondary" and "KL27" references as "Interface", as V2.0 and V2.2 use different MCUs (KL27 and nRF52) |
+| Version     | Changes |
+|-------------|---------|
+| 1.00        | Initial release, as implemented in DAPLink 0255 |
+| [1.01][101] | Add note to "Power state" property about the hardware issue detecting battery power when USB power is present. |
+| [2.00][200] | Add busy flag error code |
+|             | Add "Set encoding window" command to the I2C Flash interface [PR #9](https://github.com/microbit-foundation/spec-i2c-protocol/pull/9) |
+| [2.01][201] | Fix documentation bug where commands were marked as bidirectional |
+|             | Removed "success" error code as it is unused |
+| [2.02][202] | Generalise the "I2C secondary" and "KL27" references as "Interface", as V2.0 and V2.2 use different MCUs (KL27 and nRF52) |
+| [2.03][203] | Added more descriptions and improve formatting |
+
+
+[101]: https://github.com/microbit-foundation/spec-i2c-protocol/commit/63d14ee2aefc57b15280c87dfaee5391f4421d94
+[200]: https://github.com/microbit-foundation/spec-i2c-protocol/commit/14d6162332092308ed6ddc05816f6619552839ad
+[201]: https://github.com/microbit-foundation/spec-i2c-protocol/commit/1ec35f6cb902d03beb8f6723debf0c226026c1c6
+[202]: https://github.com/microbit-foundation/spec-i2c-protocol/commit/d9763056839a2933eca14545a7731f6066bbc784
+[203]: https://github.com/microbit-foundation/spec-i2c-protocol/commit/???
