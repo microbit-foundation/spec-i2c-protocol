@@ -3,24 +3,15 @@ layout: page
 title: I2C Protocol Specification
 heading: I2C Protocol Specification
 description: Specification for the micro:bit I2C Protocol
-permalink: /software/spec-i2c-protocol/
+permalink: /firmware/spec-i2c-protocol/
+slug: /firmware/spec-i2c-protocol/
 ref: spec-i2c-protocol
 lang: en
 ---
 
-# micro:bit I2C Protocol Specification
+# micro\:bit I2C Protocol Specification
 
 This is version 2.03 of the specification.
-
-- [Glossary](#glossary)
-- [Versioning](#versioning)
-- [Introduction](#introduction)
-- [I2C Secondary addresses](#i2c-secondary-addresses)
-- [I2C Interface MCU config/comms interface](#i2c-interface-mcu-configcomms-interface)
-- [I2C Flash Storage Interface](#i2c-flash-storage-interface)
-- [I2C HID Interface](#i2c-hid-interface)
-- [Doc Updates](#doc-updates)
-
 
 ## Glossary
 
@@ -49,14 +40,14 @@ The `I2C protocol version` property returns only the major version.
 
 ## Introduction
 
-The micro:bit contains two microcontrollers (more info in the [Tech Site DAPLink page](https://tech.microbit.org/software/daplink-interface/)):
+The micro:bit contains two microcontrollers (more info in the [Tech Site DAPLink page](https://tech.microbit.org/firmware/daplink-interface/)):
 
 1. Interface MCU which provides the USB functionality
 2. Target MCU where the user code runs
 
 In micro:bit V1 there are UART and SWD signals connecting the Interface MCU (KL26) and the Target MCU (nRF51). These are used for the Interface MCU (KL26) to program the Target MCU (nRF51) and to provide serial communication between the Target (nRF51) and the computer.
 
-In micro:bit V1 there is only one I2C bus, connecting the Target MCU to the motions sensors, and the bus is routed to the edge connector (more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c-shared/)).
+In micro:bit V1 there is only one I2C bus, connecting the Target MCU to the motions sensors, and the bus is routed to the edge connector (more info in the [Tech Site I2C page](https://tech.microbit.org/hardware/i2c/)).
 
 The micro:bit V2 has two I2C buses, an external bus connected from the Target MCU to the edge connector only, and an internal I2C bus connecting:
 - The Target MCU (nRF52), as the I2C main device
@@ -67,7 +58,7 @@ And all the I2C secondary devices shared a combined interrupt signal to the Targ
 
 This new internal I2C bus allows the Interface MCU to provide additional features to the Target MCU, and to co-operate to set the board into different power modes (more info in the [Power Management Spec](https://github.com/microbit-foundation/spec-power-management/)).
 
-![I2C Diagram](https://tech.microbit.org/docs/software/spec-i2c-protocol/spec/img/i2c-diagram.png)
+![I2C Diagram](./img/i2c-diagram.png)
 
 The additional features provided by the Interface MCU via I2C are:
 - Device Information
@@ -252,7 +243,7 @@ typedef enum main_usb_connect {
         e.g. 0x08<br />
         <pre>Power Down = 0x08</pre>
         There is currently only a single option, which is to request the Interface Power Down mode.
-        For more info: <a href="https://tech.microbit.org/software/spec-power-management/" target="_blank">Power Management Spec</a>
+        For more info: <a href="https://tech.microbit.org/firmware/spec-power-management/" target="_blank">Power Management Spec</a>
     </td>
 </tr>
 <tr class="even">
